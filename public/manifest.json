@@ -1,0 +1,43 @@
+{
+  "name": "KayBiT Snake Detector & Intrusion Defense",
+  "short_name": "KayBiT PWA",
+  "description": "Offline-capable Edge AI computer vision & intruder monitoring system for property snake detection and siren management.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "categories": ["security", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Feeds",
+      "short_name": "Feeds",
+      "description": "View real-time edge security feeds",
+      "url": "/#monitor",
+      "icons": [{ "src": "/icon.svg", "sizes": "512x512" }]
+    },
+    {
+      "name": "Historical Alerts",
+      "short_name": "Alerts",
+      "description": "View cached historical detection events",
+      "url": "/#alerts",
+      "icons": [{ "src": "/icon.svg", "sizes": "512x512" }]
+    },
+    {
+      "name": "Edge Camera Settings",
+      "short_name": "Settings",
+      "description": "Modify offline camera thresholds and power configs",
+      "url": "/#edge",
+      "icons": [{ "src": "/icon.svg", "sizes": "512x512" }]
+    }
+  ]
+}

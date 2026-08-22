@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#334155" stroke-width="6" opacity="0.6"/>
+
+  <!-- Outer Protective Shield -->
+  <path d="M 256 64 L 400 128 C 400 272, 336 384, 256 448 C 176 384, 112 272, 112 128 Z" 
+        fill="url(#shieldGrad)" stroke="#f59e0b" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Radar / AI Sensor Ring -->
+  <circle cx="256" cy="224" r="80" fill="none" stroke="#f59e0b" stroke-width="6" stroke-dasharray="8 8" opacity="0.5"/>
+  <circle cx="256" cy="224" r="120" fill="none" stroke="#f59e0b" stroke-width="4" stroke-dasharray="4 6" opacity="0.3"/>
+
+  <!-- Snake Head Silhouette & Eye -->
+  <path d="M 220 280 C 180 260, 190 190, 240 170 C 290 150, 330 190, 310 240 C 295 275, 250 295, 220 280 Z" 
+        fill="url(#amberGrad)"/>
+  <circle cx="270" cy="190" r="10" fill="#0f172a"/>
+  <circle cx="272" cy="188" r="4" fill="#ffffff"/>
+
+  <!-- Camera / AI Detection Crosshairs -->
+  <path d="M 256 120 L 256 150 M 256 300 L 256 330 M 150 224 L 180 224 M 330 224 L 360 224" 
+        stroke="#38bdf8" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Branding Text -->
+  <text x="256" y="405" text-anchor="middle" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="34" letter-spacing="4">KAYBIT</text>
+  <text x="256" y="432" text-anchor="middle" fill="#f59e0b" font-family="monospace" font-weight="700" font-size="18" letter-spacing="2">PWA OFFLINE READY</text>
+</svg>

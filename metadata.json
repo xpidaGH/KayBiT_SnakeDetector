@@ -1,0 +1,6 @@
+{
+  "name": "KayBiT Snake Detector",
+  "description": "Edge AI computer vision & cloud multiplatform intrusion monitoring system for property snake detection, instant siren alerts, species risk assessment, and false-positive verification.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
