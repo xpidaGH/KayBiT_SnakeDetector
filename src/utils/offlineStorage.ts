@@ -449,7 +449,7 @@ export async function syncPendingMutations(
           method: item.method,
           headers: { "Content-Type": "application/json" }
         };
-        if (item.payload && item.method !== "GET") {
+        if (item.payload) {
           options.body = JSON.stringify(item.payload);
         }
 

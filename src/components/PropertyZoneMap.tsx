@@ -7,12 +7,17 @@ import {
   AlertTriangle, 
   CheckCircle, 
   Layers, 
-  Sliders,
-  Radio,
-  Zap,
-  Info
+  Sliders, 
+  Radio, 
+  Zap, 
+  Info 
 } from "lucide-react";
 import { playSnakeIntrusionAlarm } from "../utils/audio";
+import { 
+  PROPERTY_MAP_METADATA, 
+  ZONE_THREAT_ATTRACTANTS, 
+  STATUS_LEGEND_ITEMS 
+} from "../data";
 
 interface PropertyZoneMapProps {
   zones: PropertyZone[];
@@ -30,6 +35,15 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
   const [selectedZone, setSelectedZone] = useState<PropertyZone>(zones[0]);
   const [isPerimeterArmed, setIsPerimeterArmed] = useState<boolean>(true);
 
+  const currentAttractants = ZONE_THREAT_ATTRACTANTS[selectedZone.id] || {
+    title: "Snake Attractant Analysis",
+    points: [
+      "Micro-climate: Damp mulch & low stone gaps",
+      "Prey presence: Rodent trails detected along perimeter fence",
+      "Deterrent: Strobe lighting & ultrasonic pulses active on alert"
+    ]
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -38,7 +52,7 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-bold text-slate-100">Property Defense & Sensor Node Geofencing</h2>
             <span className="px-2 py-0.5 text-xs bg-amber-500/20 text-amber-300 font-mono font-bold rounded border border-amber-500/30">
-              4 Monitored Sectors
+              {zones.length} Monitored Sectors
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
@@ -49,7 +63,7 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setIsPerimeterArmed(!isPerimeterArmed)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1.5 border ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1.5 border cursor-pointer ${
               isPerimeterArmed
                 ? "bg-emerald-950/80 border-emerald-500/50 text-emerald-400"
                 : "bg-red-950/80 border-red-500/50 text-red-400"
@@ -69,8 +83,8 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
 
           {/* Central Property House Outline */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-36 bg-slate-900/90 border-2 border-dashed border-slate-700/80 rounded-xl flex flex-col items-center justify-center p-3 text-center pointer-events-none shadow-inner">
-            <span className="font-mono text-xs font-bold text-slate-300">RESIDENCE INTERIOR</span>
-            <span className="text-[10px] text-emerald-400 font-mono mt-1">✓ SECURE ZONE</span>
+            <span className="font-mono text-xs font-bold text-slate-300">{PROPERTY_MAP_METADATA.interiorZoneLabel}</span>
+            <span className="text-[10px] text-emerald-400 font-mono mt-1">{PROPERTY_MAP_METADATA.interiorStatus}</span>
           </div>
 
           {/* Zone Hotspots / Pins */}
@@ -118,22 +132,16 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
           </div>
 
           {/* Map Footer OSD */}
-          <div className="relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400 bg-slate-900/80 p-3 rounded-xl border border-slate-800/80">
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400 bg-slate-900/80 p-3 rounded-xl border border-slate-800/80">
             <div className="flex items-center space-x-3">
-              <span className="flex items-center space-x-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
-                <span>Clean</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
-                <span>Selected</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block animate-ping" />
-                <span>Active Intrusion</span>
-              </span>
+              {STATUS_LEGEND_ITEMS.map((item, idx) => (
+                <span key={idx} className="flex items-center space-x-1">
+                  <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.colorClass}`} />
+                  <span>{item.label}</span>
+                </span>
+              ))}
             </div>
-            <span>Scale: 1:150 Property Boundary</span>
+            <span>{PROPERTY_MAP_METADATA.scaleLabel}</span>
           </div>
         </div>
 
@@ -183,11 +191,11 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
 
             {/* Zone Environmental Threat Factor */}
             <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5 text-xs">
-              <span className="font-mono text-slate-400 font-bold">Snake Attractant Analysis:</span>
+              <span className="font-mono text-slate-400 font-bold">{currentAttractants.title}:</span>
               <ul className="list-disc list-inside text-slate-300 space-y-1 text-[11px]">
-                <li>Micro-climate: Damp mulch & low stone gaps</li>
-                <li>Prey presence: Rodent trails detected along perimeter fence</li>
-                <li>Deterrent: Strobe lighting & ultrasonic pulses active on alert</li>
+                {currentAttractants.points.map((pt, idx) => (
+                  <li key={idx}>{pt}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -198,7 +206,7 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
               playSnakeIntrusionAlarm(3.5);
               onTriggerZoneIntrusion(selectedZone);
             }}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-lg shadow-red-600/30 transition-all flex items-center justify-center space-x-2"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-lg shadow-red-600/30 transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <AlertTriangle className="w-4 h-4" />
             <span>Simulate Snake Incursion in {selectedZone.name}</span>
@@ -208,3 +216,4 @@ export const PropertyZoneMap: React.FC<PropertyZoneMapProps> = ({
     </div>
   );
 };
+

@@ -30,6 +30,8 @@ import { D3Sparkline } from "./D3Sparkline";
 import { Battery24hDegradationChart } from "./Battery24hDegradationChart";
 import { NpuOverloadAlertBanner } from "./NpuOverloadAlertBanner";
 import { NpuOverloadAlertSystem } from "./NpuOverloadAlertSystem";
+import { TemporalAlertDistributionChart } from "./TemporalAlertDistributionChart";
+import { BatteryWarningToast } from "./BatteryWarningToast";
 import { 
   generateInitialTelemetryHistory, 
   computeSystemHealthSummary 
@@ -38,7 +40,8 @@ import {
   Pi5TelemetryPoint, 
   NpuAlertGovernorConfig, 
   NpuOverloadAlertIncident,
-  PushNotificationRecord 
+  PushNotificationRecord,
+  DetectionAlert
 } from "../types";
 import { playTelemetryWarningAlert } from "../utils/audio";
 
@@ -46,18 +49,22 @@ interface SystemHealthDashboardProps {
   batteryVoltage?: number;
   batteryThreshold?: number;
   batteryChemistry?: "12v_lifepo4" | "12v_lead_acid" | "3s_li_ion" | "5v_direct";
+  alerts?: DetectionAlert[];
   onThresholdChange?: (newThreshold: number) => void;
   onNavigateToNotifications?: () => void;
   onPushNotificationCreated?: (notif: PushNotificationRecord) => void;
+  onSelectAlert?: (alert: DetectionAlert) => void;
 }
 
 export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
   batteryVoltage = 12.6,
   batteryThreshold = 11.8,
   batteryChemistry = "12v_lifepo4",
+  alerts = [],
   onThresholdChange,
   onNavigateToNotifications,
-  onPushNotificationCreated
+  onPushNotificationCreated,
+  onSelectAlert
 }) => {
   const [telemetryHistory, setTelemetryHistory] = useState<Pi5TelemetryPoint[]>(() => 
     generateInitialTelemetryHistory(30)
@@ -65,7 +72,7 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
   const [stressMode, setStressMode] = useState<"normal" | "inference_heavy" | "thermal_spike" | "eco_low_power">("normal");
   const [isLiveStreaming, setIsLiveStreaming] = useState<boolean>(true);
   const [pollingIntervalMs, setPollingIntervalMs] = useState<number>(2000);
-  const [activeTab, setActiveTab] = useState<"overview" | "watchdog" | "battery" | "thermals" | "registers">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "distribution" | "watchdog" | "battery" | "thermals" | "registers">("overview");
 
   // NPU Overload Watchdog & Alert System State
   const [governorConfig, setGovernorConfig] = useState<NpuAlertGovernorConfig>({
@@ -81,6 +88,29 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
   const [isBannerDismissed, setIsBannerDismissed] = useState<boolean>(false);
   const [isSimulatingSpike, setIsSimulatingSpike] = useState<boolean>(false);
   const hasFiredForCurrentStreak = useRef<boolean>(false);
+
+  // Battery Voltage Low Warning Toast State
+  const [showBatteryLowToast, setShowBatteryLowToast] = useState<boolean>(false);
+  const [simulatedBatteryVoltage, setSimulatedBatteryVoltage] = useState<number | null>(null);
+  const effectiveBatteryVoltage = simulatedBatteryVoltage ?? batteryVoltage;
+  const lastFiredBatteryVoltageRef = useRef<number | null>(null);
+
+  // Monitor battery voltage vs threshold to trigger App-Level Warning Toast
+  useEffect(() => {
+    if (effectiveBatteryVoltage < batteryThreshold) {
+      // If we haven't fired for this drop episode or voltage dropped even further (> 0.2V delta)
+      if (
+        lastFiredBatteryVoltageRef.current === null || 
+        effectiveBatteryVoltage < lastFiredBatteryVoltageRef.current - 0.2
+      ) {
+        setShowBatteryLowToast(true);
+        lastFiredBatteryVoltageRef.current = effectiveBatteryVoltage;
+      }
+    } else {
+      // Voltage recovered above threshold
+      lastFiredBatteryVoltageRef.current = null;
+    }
+  }, [effectiveBatteryVoltage, batteryThreshold]);
 
   // Helper to dispatch push notification
   const dispatchNpuPushNotification = async (load: number, cycles: number, temp: number, incidentId: string) => {
@@ -434,7 +464,19 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
   const powerData = telemetryHistory.map(p => ({ timestamp: p.timestamp, value: p.powerWatts, timeLabel: p.timeLabel }));
 
   return (
-    <div className="space-y-6 font-mono">
+    <div className="space-y-6 font-mono relative">
+      {/* 🚨 App-Level Warning Toast for Battery Voltage Drop Below Threshold */}
+      {showBatteryLowToast && effectiveBatteryVoltage < batteryThreshold && (
+        <BatteryWarningToast
+          batteryVoltage={effectiveBatteryVoltage}
+          batteryThreshold={batteryThreshold}
+          batteryChemistry={batteryChemistry}
+          onDismiss={() => setShowBatteryLowToast(false)}
+          onAdjustThreshold={onThresholdChange}
+          onViewBatteryDetails={() => setActiveTab("battery")}
+        />
+      )}
+
       {/* 🚨 Automated NPU Overload Top-Level Warning Banner (Triggers when sustained >= 3 cycles) */}
       {isAlertTriggered && !isBannerDismissed && (
         <NpuOverloadAlertBanner
@@ -550,6 +592,38 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
               </button>
             </div>
 
+            {/* Low Voltage Drop Simulator */}
+            <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono">
+              <button
+                onClick={() => {
+                  const dropVoltage = parseFloat((batteryThreshold - 0.45).toFixed(2));
+                  setSimulatedBatteryVoltage(dropVoltage);
+                  setShowBatteryLowToast(true);
+                }}
+                className={`px-2.5 py-1 rounded-md transition-colors flex items-center space-x-1 cursor-pointer ${
+                  effectiveBatteryVoltage < batteryThreshold 
+                    ? "bg-red-500/30 text-red-300 border border-red-500/50 font-bold animate-pulse" 
+                    : "text-amber-400 hover:text-amber-300"
+                }`}
+                title={`Simulate battery voltage drop below ${batteryThreshold}V threshold`}
+              >
+                <Battery className="w-3 h-3" />
+                <span>Simulate Low Volt</span>
+              </button>
+              {simulatedBatteryVoltage !== null && (
+                <button
+                  onClick={() => {
+                    setSimulatedBatteryVoltage(null);
+                    setShowBatteryLowToast(false);
+                  }}
+                  className="px-2 py-1 rounded-md text-slate-400 hover:text-white text-[10px] cursor-pointer"
+                  title="Reset to live battery telemetry"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+
             {/* Export CSV */}
             <button
               onClick={handleExportCsv}
@@ -619,13 +693,24 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
             <div className="text-[10px] text-slate-500">DMA CMA Pool: 512MB</div>
           </div>
 
-          <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800/80">
-            <div className="text-[10px] text-slate-400 uppercase flex items-center space-x-1">
-              <BatteryCharging className="w-3 h-3 text-emerald-400" />
-              <span>Battery Bus Rail</span>
+          <div className={`p-2.5 rounded-xl border ${
+            effectiveBatteryVoltage < batteryThreshold
+              ? "bg-red-950/60 border-red-500/70 shadow-lg shadow-red-950/50 animate-pulse"
+              : "bg-slate-950/80 border-slate-800/80"
+          }`}>
+            <div className="text-[10px] text-slate-400 uppercase flex items-center justify-between">
+              <div className="flex items-center space-x-1">
+                <BatteryCharging className={`w-3 h-3 ${effectiveBatteryVoltage < batteryThreshold ? "text-red-400" : "text-emerald-400"}`} />
+                <span>Battery Bus Rail</span>
+              </div>
+              {effectiveBatteryVoltage < batteryThreshold && (
+                <span className="text-[9px] text-red-400 font-bold">LOW VOLT</span>
+              )}
             </div>
-            <div className="text-base font-bold text-emerald-400">
-              {batteryVoltage.toFixed(1)}V
+            <div className={`text-base font-bold ${
+              effectiveBatteryVoltage < batteryThreshold ? "text-red-400" : "text-emerald-400"
+            }`}>
+              {effectiveBatteryVoltage.toFixed(2)}V
             </div>
             <div className="text-[10px] text-slate-500">Cutoff: {batteryThreshold.toFixed(1)}V</div>
           </div>
@@ -669,6 +754,17 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
             }`}
           >
             📊 Comprehensive Health View
+          </button>
+          <button
+            onClick={() => setActiveTab("distribution")}
+            className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center space-x-1.5 ${
+              activeTab === "distribution"
+                ? "bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold"
+                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>📈 Temporal Alert Distribution (Recharts 24h)</span>
           </button>
           <button
             onClick={() => setActiveTab("watchdog")}
@@ -722,6 +818,14 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
         </div>
       </div>
 
+      {/* Temporal Alert Distribution Chart (Recharts) */}
+      {(activeTab === "overview" || activeTab === "distribution") && (
+        <TemporalAlertDistributionChart
+          alerts={alerts}
+          onSelectAlert={onSelectAlert}
+        />
+      )}
+
       {/* NPU Overload Watchdog & Automation Alert Component */}
       {(activeTab === "overview" || activeTab === "watchdog") && (
         <NpuOverloadAlertSystem
@@ -745,7 +849,7 @@ export const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
       {/* 24-Hour Battery Voltage Degradation Visualization Component */}
       {(activeTab === "overview" || activeTab === "battery") && (
         <Battery24hDegradationChart
-          currentVoltage={batteryVoltage}
+          currentVoltage={effectiveBatteryVoltage}
           thresholdVoltage={batteryThreshold}
           initialChemistry={batteryChemistry}
           onThresholdChange={onThresholdChange}

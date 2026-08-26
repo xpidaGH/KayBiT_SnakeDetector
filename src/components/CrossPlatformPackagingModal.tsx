@@ -4,7 +4,10 @@ import {
   REACT_NATIVE_CODE_SNIPPET,
   ANDROID_MANIFEST_XML,
   FLUTTER_PUBSPEC_YAML,
-  INSTALLATION_GUIDE_MD
+  INSTALLATION_GUIDE_MD,
+  TAURI_CONFIG_SNIPPET,
+  CAPACITOR_CONFIG_SNIPPET,
+  GITHUB_ACTIONS_YAML
 } from "../data";
 import { 
   Smartphone, 
@@ -49,122 +52,10 @@ export const CrossPlatformPackagingModal: React.FC = () => {
 
   const flutterManifestXml = ANDROID_MANIFEST_XML;
   const flutterPubspecYaml = FLUTTER_PUBSPEC_YAML;
+  const tauriConfigSnippet = TAURI_CONFIG_SNIPPET;
+  const capacitorConfigSnippet = CAPACITOR_CONFIG_SNIPPET;
+  const githubActionsYaml = GITHUB_ACTIONS_YAML;
 
-  const tauriConfigSnippet = `{
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/tooling/cli/schema.json",
-  "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:3000",
-    "distDir": "../dist"
-  },
-  "package": {
-    "productName": "KayBiT Snake Detector",
-    "version": "1.2.0"
-  },
-  "tauri": {
-    "bundle": {
-      "active": true,
-      "category": "Utility",
-      "identifier": "com.kaybit.snakedetector.desktop",
-      "icon": ["icons/icon.ico", "icons/icon.icns"],
-      "targets": "all",
-      "windows": { "certificateThumbprint": null },
-      "macOS": { "minimumSystemVersion": "10.15" }
-    },
-    "windows": [
-      {
-        "title": "KayBiT Edge AI Snake Detector",
-        "width": 1440,
-        "height": 900,
-        "resizable": true
-      }
-    ]
-  }
-}`;
-
-  const capacitorConfigSnippet = `// capacitor.config.ts
-import type { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
-  appId: 'com.kaybit.snakedetector',
-  appName: 'KayBiT Snake Detector',
-  webDir: 'dist',
-  server: {
-    androidScheme: 'https',
-    cleartext: true, // Enables local RTSP streaming on LAN
-  },
-  plugins: {
-    PushNotifications: {
-      presentationOptions: ['badge', 'sound', 'alert'],
-    },
-    LocalNotifications: {
-      smallIcon: 'ic_stat_snake',
-      iconColor: '#f59e0b',
-      sound: 'snake_alarm.wav',
-    },
-  },
-  android: {
-    allowMixedContent: true,
-    webContentsDebuggingEnabled: true,
-  }
-};
-
-export default config;`;
-
-  const githubActionsYaml = `name: Build Native Cross-Platform Binaries (Android, Windows, macOS)
-
-on:
-  push:
-    tags:
-      - 'v*'
-    branches:
-      - main
-  workflow_dispatch:
-
-jobs:
-  # 1. Android APK Build
-  build-android:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: 'npm' }
-      - uses: actions/setup-java@v4
-        with: { distribution: 'zulu', java-version: '17' }
-      - uses: android-actions/setup-android@v3
-      - run: npm ci && npm run build
-      - run: npx cap add android || true && npx cap sync android
-      - working-directory: android
-        run: ./gradlew assembleDebug --stacktrace
-      - uses: actions/upload-artifact@v4
-        with:
-          name: KayBiT-Android-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
-  # 2. Desktop Windows (.exe) & macOS (.dmg) Build
-  build-desktop:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'windows-latest'
-          - platform: 'macos-latest'
-    runs-on: \${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: 'npm' }
-      - uses: dtolnay/rust-toolchain@stable
-      - run: npm ci
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: v__VERSION__
-          releaseName: 'KayBiT v__VERSION__'
-          releaseDraft: false
-          prerelease: false`;
 
   return (
     <div className="space-y-6">

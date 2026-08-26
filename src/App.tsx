@@ -339,9 +339,11 @@ export default function App() {
             batteryVoltage={metrics?.edgeDevice?.battery_voltage || 12.6}
             batteryThreshold={metrics?.edgeDevice?.batteryVoltageThreshold || 11.8}
             batteryChemistry={metrics?.edgeDevice?.batteryChemistry || "12v_lifepo4"}
+            alerts={alerts}
             onThresholdChange={(thresh) => handleUpdateEdgeConfig({ batteryVoltageThreshold: thresh })}
             onNavigateToNotifications={() => setActiveTab("notifications")}
             onPushNotificationCreated={(notif) => setNotifications(prev => [notif, ...prev])}
+            onSelectAlert={(alert) => setSelectedAlertForAnalysis(alert)}
           />
         )}
 
