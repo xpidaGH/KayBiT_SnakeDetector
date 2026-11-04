@@ -85,6 +85,21 @@ export interface PropertyZone {
   isPerimeterDefense?: boolean;
 }
 
+export type AppTheme = "editorial" | "technical" | "warm" | "dark" | "vibrant";
+
+export interface QuietHoursSchedule {
+  enabled: boolean;
+  preset: "nocturnal_guard" | "battery_saver" | "always_active" | "custom";
+  startTime: string; // e.g. "22:00"
+  endTime: string;   // e.g. "06:00"
+  activeDays: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[];
+  muteSoundAlarm: boolean;
+  suppressFcmToNormal: boolean;
+  reducedInferenceFps: number; // e.g. 5 fps during quiet hours
+  exemptCriticalPerimeter: boolean; // keep perimeter cameras at full power
+  currentScheduleStatus?: "active_monitoring" | "quiet_hours_standby" | "override_active";
+}
+
 export interface EdgeDeviceConfig {
   activeModel: string;
   confidenceThreshold: number;
@@ -109,6 +124,7 @@ export interface EdgeDeviceConfig {
   criticalZonesPrioritized?: string[];
   activeDisabledCameraIds?: string[];
   powerSaveModeActive?: boolean;
+  quietHours?: QuietHoursSchedule;
 }
 
 export interface PushNotificationRecord {

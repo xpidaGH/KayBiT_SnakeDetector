@@ -1,6 +1,7 @@
 import React from "react";
-import { Shield, AlertTriangle, Moon, Sun, BellRing, VolumeX, Cpu, BookOpen, Smartphone, Radio, Activity, Battery, BatteryCharging, BatteryWarning, Zap } from "lucide-react";
+import { Shield, AlertTriangle, Moon, Sun, BellRing, VolumeX, Cpu, BookOpen, Smartphone, Radio, Activity, Battery, BatteryCharging, BatteryWarning, Zap, Palette, Monitor } from "lucide-react";
 import { SystemMetrics } from "../types";
+import { KbtBrandLogo } from "./KbtBrandLogo";
 
 interface NavbarProps {
   metrics: SystemMetrics | null;
@@ -12,6 +13,7 @@ interface NavbarProps {
   onSelectTab: (tab: "monitor" | "alerts" | "zones" | "edge" | "health" | "notifications" | "roadmap" | "packaging") => void;
   onOpenSimulator: () => void;
   onOpenUserGuide: () => void;
+  onOpenThemeSettings: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -23,20 +25,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   onSelectTab,
   onOpenSimulator,
-  onOpenUserGuide
+  onOpenUserGuide,
+  onOpenThemeSettings
 }) => {
   const activeAlertCount = metrics?.activeAlertsCount || 0;
   const batteryVoltage = metrics?.edgeDevice?.battery_voltage ?? 12.6;
   const isLoadSheddingActive = metrics?.edgeDevice?.powerSaveModeActive ?? false;
 
   return (
-    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-xl">
+    <header className="theme-header border-b sticky top-0 z-40 shadow-xl transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & Brand */}
+          {/* Logo & Brand using KbtBrandLogo component */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectTab("monitor")}>
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-              <Shield className="w-5 h-5" />
+            <div className="relative">
+              <KbtBrandLogo variant="web" showLabel={false} size="md" />
               {activeAlertCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -47,12 +50,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-lg text-slate-100 tracking-tight">KayBiT</span>
-                <span className="text-xs uppercase font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
-                  Snake Detector
+                <span className="text-xs uppercase font-mono px-1.5 py-0.5 rounded bg-lime-500/20 text-lime-300 font-semibold border border-lime-500/30 flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse"></span>
+                  <span>Snake Detector</span>
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
-                Edge AI Vision + Cloud Multiplatform Warning
+                Multiplatform Edge AI Vision + Cloud Warning
               </p>
             </div>
           </div>
@@ -200,6 +204,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span className="hidden sm:inline">{batteryVoltage.toFixed(1)}V</span>
                 </>
               )}
+            </button>
+
+            {/* Theme Settings Button */}
+            <button
+              onClick={onOpenThemeSettings}
+              title="UI Theme Settings (5 Variations: Editorial, Technical, Warm, Dark, Vibrant)"
+              className="px-2.5 py-1.5 rounded-lg border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+            >
+              <Palette className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden sm:inline">Themes</span>
             </button>
 
             {/* User Guide Button */}

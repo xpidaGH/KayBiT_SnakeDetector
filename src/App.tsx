@@ -25,6 +25,7 @@ import { SystemHealthDashboard } from "./components/SystemHealthDashboard";
 import { SpeciesAnalysisModal } from "./components/SpeciesAnalysisModal";
 import { SimulatorModal } from "./components/SimulatorModal";
 import { UserGuideModal } from "./components/UserGuideModal";
+import { ThemeSettingsModal } from "./components/ThemeSettingsModal";
 import { SplashScreen } from "./components/SplashScreen";
 import { 
   playSnakeIntrusionAlarm, 
@@ -33,7 +34,7 @@ import {
   playAcknowledgeBeep 
 } from "./utils/audio";
 import { AlertTriangle, BellRing, VolumeX, Shield, Radio, Sparkles } from "lucide-react";
-import { PushNotificationRecord } from "./types";
+import { PushNotificationRecord, AppTheme } from "./types";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"monitor" | "alerts" | "zones" | "edge" | "health" | "notifications" | "roadmap" | "packaging">("monitor");
@@ -50,6 +51,45 @@ export default function App() {
   const [selectedAlertForAnalysis, setSelectedAlertForAnalysis] = useState<DetectionAlert | null>(null);
   const [isSimulatorOpen, setIsSimulatorOpen] = useState<boolean>(false);
   const [isUserGuideOpen, setIsUserGuideOpen] = useState<boolean>(false);
+  const [isThemeSettingsOpen, setIsThemeSettingsOpen] = useState<boolean>(false);
+
+  // Theme variation state persisted in localStorage
+  const [currentTheme, setCurrentTheme] = useState<AppTheme>(() => {
+    try {
+      const saved = localStorage.getItem("kaybit_theme") as AppTheme;
+      if (saved && ["editorial", "technical", "warm", "dark", "vibrant"].includes(saved)) {
+        return saved;
+      }
+    } catch (e) {
+      // Fallback
+    }
+    return "dark";
+  });
+
+  // Apply theme to DOM document element
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", currentTheme);
+    if (currentTheme === "editorial" || currentTheme === "warm") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+  }, [currentTheme]);
+
+  const handleSelectTheme = (theme: AppTheme) => {
+    setCurrentTheme(theme);
+    try {
+      localStorage.setItem("kaybit_theme", theme);
+    } catch (e) {
+      console.warn("Storage error", e);
+    }
+    document.documentElement.setAttribute("data-theme", theme);
+    if (theme === "editorial" || theme === "warm") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+  };
 
   // Fetch initial alerts, status, and FCM notifications
   useEffect(() => {
@@ -222,7 +262,7 @@ export default function App() {
   const activeAlerts = alerts.filter(a => a.status === "active");
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 flex flex-col">
+    <div className="min-h-screen theme-root font-sans selection:bg-amber-500 selection:text-slate-950 flex flex-col transition-colors">
       {/* Top Strobe / Warning Banner if Active Alerts */}
       {activeAlerts.length > 0 && (
         <div className="bg-red-600 text-white px-4 py-2 text-xs font-mono font-bold flex items-center justify-between shadow-lg shadow-red-600/30 animate-pulse sticky top-0 z-50">
@@ -261,6 +301,7 @@ export default function App() {
         onSelectTab={setActiveTab}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onOpenUserGuide={() => setIsUserGuideOpen(true)}
+        onOpenThemeSettings={() => setIsThemeSettingsOpen(true)}
       />
 
       {/* Main Content Body */}
@@ -389,6 +430,14 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Theme Settings Modal */}
+      <ThemeSettingsModal
+        isOpen={isThemeSettingsOpen}
+        onClose={() => setIsThemeSettingsOpen(false)}
+        currentTheme={currentTheme}
+        onSelectTheme={handleSelectTheme}
+      />
 
       {/* Footer */}
       <footer className="bg-slate-900/60 border-t border-slate-800/80 py-4 mt-12 text-center text-xs font-mono text-slate-500">

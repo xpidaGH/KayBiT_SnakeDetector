@@ -279,7 +279,19 @@ let edgeConfig = {
   batteryChemistry: "12v_lifepo4" as const,
   criticalZonesPrioritized: ["zone-garden", "zone-entry"],
   activeDisabledCameraIds: [] as string[],
-  powerSaveModeActive: false
+  powerSaveModeActive: false,
+  quietHours: {
+    enabled: true,
+    preset: "nocturnal_guard",
+    startTime: "08:00",
+    endTime: "18:00",
+    activeDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    muteSoundAlarm: true,
+    suppressFcmToNormal: true,
+    reducedInferenceFps: 5,
+    exemptCriticalPerimeter: true,
+    currentScheduleStatus: "active_monitoring"
+  }
 };
 
 // API: System Status & Metrics
